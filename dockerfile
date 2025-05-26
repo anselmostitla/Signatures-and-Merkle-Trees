@@ -16,10 +16,18 @@
 # 6. Now you can initialize a foundry project
 # --> forge init . --force
 
-FROM shidaxi/foundry-rs:2024-01-09-alpine-3.19
+# FROM shidaxi/foundry-rs:2024-01-09-alpine-3.19
+# Use official latest Foundry image with all recent updates
+FROM ghcr.io/foundry-rs/foundry:latest
 
-# Install git
-RUN apk update && apk add git
+# Switch to root user to install dependencies
+USER root
+
+# # Install git
+# RUN apk update && apk add git
+
+# Install git (use apt instead of apk)
+RUN apt-get update && apt-get install -y git
 
 # Configure Git identity
 RUN git config --global user.name "Anselmo Ramon Sanchez Titla" && \
@@ -51,3 +59,29 @@ WORKDIR /workspace
 # To see containers or images
 # --> docker ps -a
 # --> docker images
+
+
+# --------------------------------------------------------------------------------
+        # AFTER CLOSING AND OPENING TO CONTINUE WORKING WITH THIS PROJECT
+# --------------------------------------------------------------------------------
+
+# STEP 1: The image should already be created, if not create the image
+# docker build -t merkle-airdrop .
+
+# STEP 2: Run the Docker Container with Volume Mount
+# Go to your project folder and run:
+
+    # --> docker run -it --rm -v $(pwd):/workspace -w /workspace merkle-airdrop sh
+
+# What this does:
+# -v $(pwd):/workspace: Shares your local code with the Docker container.
+# -w /workspace: Makes sure you're in the right directory inside Docker.
+# sh: Opens a shell so you can interact with the container.
+
+
+# STEP 3: Once Inside the Container, You Can Work Like Normal
+# Inside the Docker container, you'll now be in the /workspace folder, which contains your Foundry project.
+# You can now run:
+    # forge build       # Compile your smart contracts
+    # forge test        # Run your tests
+    # forge script ...  # Run your deployment or interaction scripts
