@@ -6,3 +6,6 @@
 	url = https://github.com/OpenZeppelin/openzeppelin-contracts
 [submodule "lib/murky"]
 	path = lib/murky
+[submodule "lib/foundry-devops"]
+	path = lib/foundry-devops
+	url = https://github.com/cyfrin/foundry-devops
