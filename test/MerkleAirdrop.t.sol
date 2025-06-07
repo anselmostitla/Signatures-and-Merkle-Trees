@@ -2,11 +2,20 @@
 pragma solidity 0.8.24;
 
 import {Test, console} from "forge-std/Test.sol";
+
+// importing our protocol
 import {MerkleAirdrop} from "../src/MerkleAirdrop.sol";
 import {BaguelToken} from "../src/BaguelToken.sol";
 
+// importing our deployer
+import { DeployMerkleAirdrop } from "../script/DeployMerkleAirdrop.s.sol";
 
-contract MerkleAirdropTest is Test{
+// importing the rest
+import { ZkSyncChainChecker } from "lib/foundry-devops/src/ZkSyncChainChecker.sol";
+
+
+contract MerkleAirdropTest is ZkSyncChainChecker, Test{
+   // Our protocol variables
    MerkleAirdrop public airdrop;
    BaguelToken public token;
 
@@ -14,15 +23,23 @@ contract MerkleAirdropTest is Test{
    uint256 public AMOUNT_TO_CLAIM = 25*1e18;
    uint256 public AMOUNT_TO_SEND = AMOUNT_TO_CLAIM * 4;
    bytes32[] public PROOF;
+
+   address gasPayer;
    address user;
    uint256 userPrivKey;
 
    function setUp() public{
+      if(!isZkSyncChain()){
+         // deploy with the script
+         DeployMerkleAirdrop deployer = new DeployMerkleAirdrop();
+         (airdrop, token) = deployer.deployMerkleAirdrop(); 
+      }
       token = new BaguelToken();
       airdrop = new MerkleAirdrop(ROOT, token);
       token.mint(token.owner(), AMOUNT_TO_SEND);
       token.transfer(address(airdrop), AMOUNT_TO_SEND);
       (user, userPrivKey) = makeAddrAndKey("user");
+      gasPayer = makeAddr("gasPayer");
 
       // Set PROOF dynamically
       PROOF.push(0x0fd7c981d39bece61f7499702bf59b3114a90e66b51ba2c53abdf7b62986c00a);
@@ -32,14 +49,19 @@ contract MerkleAirdropTest is Test{
    function testUserCanClaim() public{
       console.log("use addr: %s", user);
       uint256 startingBalance = token.balanceOf(user);
+      console.log("startingBalance: ", startingBalance);
 
       bytes32[] memory proof = new bytes32[](PROOF.length);
       for (uint256 i = 0; i< PROOF.length; i++){
          proof[i] = PROOF[i];
       }
 
-      vm.prank(user);
-      airdrop.claim(user, AMOUNT_TO_CLAIM, proof);  
+      bytes32 digest = airdrop.getMessage(user, AMOUNT_TO_CLAIM);
+      (uint8 v, bytes32 r, bytes32 s) = vm.sign(userPrivKey, digest);
+
+      vm.prank(gasPayer);
+      airdrop.claim(user, AMOUNT_TO_CLAIM, proof, v, r, s);  
+      
 
       uint256 endingBalance = token.balanceOf(user);
 
