@@ -12,3 +12,7 @@ To do these scripts we are going to actually use murky "dmfxyz/murky"
 
 forge install dmfxyz/murky@5feccd1253d7da820f7cccccdedf64471025455d --no-commit 
 
+forge install cyfrin/foundry-devops
+
+
+
